@@ -4,53 +4,28 @@ def find_balanced_roles(
     max_stackables=3
 ):
     from assign_roles import assign_roles
+    from load_roles import load_roles
+    from prompt_user_for_roles import prompt_user_for_roles
+    from prompt_game_settings import prompt_game_settings
 
     import json
     import random
 
     # Load roles from roles.json
-    try:
-        with open(roles_file, 'r', encoding='utf-8') as file:
-            roles_dict = json.load(file)
-    except FileNotFoundError:
-        print(f"Die Datei {roles_file} wurde nicht gefunden.")
+    roles_dict = load_roles(roles_file)
+    if roles_dict is None:
         return None, None, None
 
     from role_utils import build_name_map, resolve_roles_by_name
-
     name_map = build_name_map(roles_dict)
-    included_roles = []
+    included_roles = prompt_user_for_roles(roles_dict, name_map, resolve_roles_by_name)
 
-    use_specific = input("Möchtest du bestimmte Rollen benutzen? (y/n): ").strip().lower()
-    if use_specific == 'y':
-        while True:
-            raw_input = input("Welche Rollen möchtest du benutzen?\n").strip()
-            user_inputs = [r.strip() for r in raw_input.split(",")]
-
-            resolved_roles, unknown_names = resolve_roles_by_name(user_inputs, name_map)
-
-            if unknown_names:
-                print("\nEinige Rollen wurden nicht erkannt:")
-                for name in unknown_names:
-                    print(f"- '{name}'")
-                retry = input("Möchtest du es nochmal versuchen? (y/n): ").strip().lower()
-                if retry == 'y':
-                    continue
-                else:
-                    print("Set wird ohne vorbestimmte Rollen erstellt. \n")
-                    break
-            else:
-                included_roles = resolved_roles
-                print(f"{len(included_roles)} Rollen werden eingebunden.\n")
-                break
 
     # Take user input for number of players and target balance sum
-    try:
-        num_players = int(input("Wie viele Spieler spielen mit? "))
-        target_sum = int(input("Bevorzugter Punktewert: "))
-    except ValueError:
-        print("Bitte gib gültige Zahlen ein.")
+    num_players, target_sum = prompt_game_settings()
+    if num_players is None or target_sum is None:
         return None, None, None
+
 
     all_roles = list(roles_dict.keys())
 
@@ -116,7 +91,8 @@ def find_balanced_roles(
             used_roles.add(role)
 
         # Choose stackable roles
-        while len(stackables) < num_stackables:
+                # Choose stackable roles and handle their dependencies
+        while len(stackables) < num_stackables and len(selected_roles) + len(stackables) < num_players:
             role = random.choice(all_roles)
             meta = roles_dict[role]
 
@@ -124,6 +100,37 @@ def find_balanced_roles(
                 continue
             if role in stackables:
                 continue
+
+            # Handle required roles for stackable
+            required = meta.get("requires", [])
+            required_to_add = [r for r in required if r not in selected_roles and r not in stackables]
+
+            # Check if adding this stackable and its required roles would exceed player limit
+            if len(selected_roles) + len(stackables) + 1 + len(required_to_add) > num_players:
+                continue
+
+            # Check if required roles violate constraints
+            conflict = False
+            for req in required_to_add:
+                req_meta = roles_dict.get(req)
+                if not req_meta:
+                    conflict = True
+                    break
+                if req_meta.get("stackable", False):
+                    conflict = True
+                    break
+                if not req_meta.get("repeatable", False) and req in selected_roles:
+                    conflict = True
+                    break
+            if conflict:
+                continue
+
+            # Add required roles
+            for req in required_to_add:
+                selected_roles.append(req)
+                used_roles.add(req)
+
+            # Add the stackable
             stackables.append(role)
 
         total_roles = selected_roles + stackables
