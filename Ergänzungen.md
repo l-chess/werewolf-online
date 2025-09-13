@@ -1,0 +1,3 @@
+- Wahrscheinlichkeiten für Rollen
+- Kategorien für Rollen
+- Repeatbles mindestens 2 mal
