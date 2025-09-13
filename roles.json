@@ -53,7 +53,7 @@
   "Zaubermeisterin": { "points": -3, "requires": ["Metzger", "Seher", "Werwolf"] },
   "Teen-Werwolf": { "points": -4 },
   "Einsamer Wolf": { "points": -5, "requires": ["Werwolf"] },
-  "Günstling": { "points": -6, "stackable": true },
+  "Günstling": { "points": -6, "stackable": true, "requires": ["Werwolf"] },
   "Werwolf": { "points": -6, "repeatable": true },
   "Brandstifter": { "points": -7 },
   "Dmitri": { "points": -7, "requires": ["Sergej"] },
