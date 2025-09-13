@@ -149,8 +149,6 @@ def find_balanced_roles(
                 for r in stackables:
                     print(f"- {r} ({roles_dict[r]['points']} Punkte)")
 
-            print(f"\nGesamtpunkte (inklusive Zusatzrollen): {total_points}")
-
             # Prompt user to assign roleset to players
             assign_now = input("\nMöchtest du diese Rollen jetzt zuweisen? (y/n): ").strip().lower()
             if assign_now == 'y':
