@@ -11,8 +11,16 @@ def assign_roles(selected_roles=None, stackables=None):
     player_input = input("Wer spielt mit?\n")
     players = [p.strip() for p in player_input.split(",")]
 
-    if len(players) != len(selected_roles):
-        print("Anzahl der Spieler stimmt nicht mit der Anzahl der Hauptrollen überein.")
+    if len(players) < len(selected_roles):
+        print(
+            "Anzahl der Spieler stimmt nicht mit der Anzahl der Hauptrollen überein. (Zu wenig)"
+        )
+        return
+
+    if len(players) > len(selected_roles):
+        print(
+            "Anzahl der Spieler stimmt nicht mit der Anzahl der Hauptrollen überein. (Zu viel)"
+        )
         return
 
     random.shuffle(players)
